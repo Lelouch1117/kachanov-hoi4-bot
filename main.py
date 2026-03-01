@@ -108,17 +108,21 @@ async def list_countries(interaction: discord.Interaction):
         await interaction.response.send_message("Свободных стран нет.")
         return
 
-    # Если стран больше 25 — выводим списком
-    if len(available) > 25:
-        text = ", ".join(available)
+    # Если мало стран → кнопки
+    if len(available) <= 10:
+        view = countries.CountryView()
         await interaction.response.send_message(
-            f"Свободные страны:\n{text}\n\nИспользуйте /register TAG"
+            "Выберите страну:",
+            view=view
         )
         return
 
-    # Если <=25 — показываем кнопки
-    view = countries.CountryView()
-    await interaction.response.send_message("Выберите страну:", view=view)
+    # Если много стран → список
+    text = ", ".join(available)
+
+    await interaction.response.send_message(
+        f"Свободные страны:\n{text}\n\nИспользуйте /register TAG"
+    )
 
 
 @bot.tree.command(name="clear_countries", guild=discord.Object(id=GUILD_ID))
@@ -205,6 +209,7 @@ async def admin_panel(interaction: discord.Interaction):
 # ================= RUN =================
 
 bot.run(TOKEN)
+
 
 
 
