@@ -122,7 +122,30 @@ async def clear_countries(interaction: discord.Interaction):
     countries.clear_all()
     await interaction.response.send_message("Список стран очищен.")
 
+@bot.tree.command(name="register", guild=discord.Object(id=GUILD_ID))
+@app_commands.describe(tag="Тег страны (например SOV)")
+async def register(interaction: discord.Interaction, tag: str):
 
+    tag = tag.upper()
+
+    result = countries.assign_country(tag, interaction.user.id)
+
+    if result == "taken":
+        await interaction.response.send_message("Эта страна занята.", ephemeral=True)
+        return
+
+    if result == "not_found":
+        await interaction.response.send_message("Страна не найдена.", ephemeral=True)
+        return
+
+    await interaction.response.send_message(
+        f"{interaction.user.display_name} занял {tag}"
+    )
+
+    try:
+        await interaction.user.send(f"Вы успешно заняли {tag}")
+    except:
+        pass
 # =====================================================
 # ===================== ADMIN PANEL ====================
 # =====================================================
@@ -173,5 +196,6 @@ async def admin_panel(interaction: discord.Interaction):
 # ================= RUN =================
 
 bot.run(TOKEN)
+
 
 
