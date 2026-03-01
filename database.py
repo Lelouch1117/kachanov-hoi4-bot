@@ -56,3 +56,55 @@ def delete_game(game_id):
     conn.commit()
     cur.close()
     conn.close()
+def set_countries(tags):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM countries;")
+    for tag in tags:
+        cur.execute("INSERT INTO countries (tag, user_id) VALUES (%s, NULL);", (tag,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def get_available_countries():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT tag FROM countries WHERE user_id IS NULL;")
+    countries = [row["tag"] for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return countries
+
+
+def register_country(tag, user_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT user_id FROM countries WHERE tag = %s;", (tag,))
+    result = cur.fetchone()
+
+    if not result:
+        cur.close()
+        conn.close()
+        return "NOT_FOUND"
+
+    if result["user_id"] is not None:
+        cur.close()
+        conn.close()
+        return "TAKEN"
+
+    cur.execute("UPDATE countries SET user_id = %s WHERE tag = %s;", (user_id, tag))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return "SUCCESS"
+
+
+def clear_countries():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM countries;")
+    conn.commit()
+    cur.close()
+    conn.close()
