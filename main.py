@@ -6,7 +6,23 @@ from discord.ext import commands
 from discord import app_commands
 import countries
 import games
+from database import get_games
 
+@bot.tree.command(name="list_games")
+async def list_games(interaction: discord.Interaction):
+
+    games = get_games()
+
+    if not games:
+        await interaction.response.send_message("Активных игр нет.")
+        return
+
+    text = ""
+    for game in games:
+        text += f"ID {game['id']}: {game['description']}\n\n"
+
+    await interaction.response.send_message(text)
+    
 TOKEN = os.getenv("TOKEN")
 if TOKEN is None:
     raise ValueError("TOKEN не найден в переменных окружения")
@@ -150,4 +166,5 @@ async def admin_panel(interaction: discord.Interaction):
 
 
 bot.run(TOKEN)
+
 
