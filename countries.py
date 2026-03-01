@@ -1,5 +1,5 @@
 import discord
-from database import assign_country, get_available_countries
+from database import get_available_countries
 from database import get_connection
 
 
@@ -170,6 +170,7 @@ async def callback(self, interaction: discord.Interaction):
         pass
 
     await interaction.message.edit(view=CountryView())
+
 
 
 
