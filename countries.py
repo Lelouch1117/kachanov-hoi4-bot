@@ -50,7 +50,15 @@ def get_taken_country_by_user(user_id):
     cur.close()
     conn.close()
     return row["tag"] if row else None
-
+    
+def get_taken_countries():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT tag, user_id FROM countries WHERE user_id IS NOT NULL")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return rows
 
 def assign_country(tag, user_id):
     conn = get_connection()
@@ -118,4 +126,5 @@ class CountryButton(discord.ui.Button):
             pass
 
         await interaction.message.edit(view=CountryView())
+
 
