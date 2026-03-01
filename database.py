@@ -133,3 +133,40 @@ def get_taken_countries():
     cur.close()
     conn.close()
     return rows
+def add_game_db(description):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "INSERT INTO games (description) VALUES (%s) RETURNING id",
+        (description,)
+    )
+
+    game_id = cur.fetchone()[0]
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return game_id
+
+
+def get_games():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, description FROM games ORDER BY id")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return rows
+
+
+def remove_game_db(game_id):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM games WHERE id = %s", (game_id,))
+    deleted = cur.rowcount
+    conn.commit()
+    cur.close()
+    conn.close()
+    return deleted > 0
