@@ -39,7 +39,7 @@ def get_available_countries():
     rows = cur.fetchall()
     cur.close()
     conn.close()
-    return [row["tag"] for row in rows]
+    return [row[0] for row in rows]
 
 
 def get_taken_country_by_user(user_id):
@@ -65,7 +65,7 @@ def assign_country(tag, user_id):
         conn.close()
         return "not_found"
 
-    if row["user_id"] and row["user_id"] != user_id:
+    if row[0] and row["user_id"] != user_id:
         cur.close()
         conn.close()
         return "taken"
@@ -118,3 +118,4 @@ class CountryButton(discord.ui.Button):
             pass
 
         await interaction.message.edit(view=CountryView())
+
