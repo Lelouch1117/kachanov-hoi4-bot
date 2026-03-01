@@ -146,10 +146,16 @@ class AdminPanel(discord.ui.View):
 
         text = ""
         for row in taken:
-            tag = row[0]
-            user_id = row[1]
-            member = await interaction.guild.fetch_member(user_id)
-            text += f"{tag} — {member.display_name}\n"
+            tag = row["tag"]
+            user_id = row["user_id"]
+
+            try:
+                member = await interaction.guild.fetch_member(user_id)
+                name = member.display_name
+            except:
+                name = f"ID {user_id}"
+
+            text += f"{tag} — {name}\n"
 
         await interaction.response.send_message(text, ephemeral=True)
 
@@ -164,7 +170,7 @@ async def admin_panel(interaction: discord.Interaction):
     view = AdminPanel()
     await interaction.response.send_message("Админ-панель:", view=view, ephemeral=True)
 
-
 # ================= RUN =================
 
 bot.run(TOKEN)
+
