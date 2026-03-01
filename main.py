@@ -31,6 +31,13 @@ async def on_ready():
     await bot.tree.sync(guild=guild)
     print(f"Бот запущен как {bot.user}")
 
+@bot.event
+async def on_ready():
+    guild = discord.Object(id=GUILD_ID)
+    await bot.tree.sync(guild=guild)
+    print("Команды пересинхронизированы")
+    print(f"Бот запущен как {bot.user}")
+
 # ---------------- GAMES (через БД) ----------------
 
 @bot.tree.command(name="add_game", guild=discord.Object(id=GUILD_ID))
@@ -75,5 +82,6 @@ async def clear_game_command(interaction: discord.Interaction, game_id: int):
 # ---------------- RUN ----------------
 
 bot.run(TOKEN)
+
 
 
