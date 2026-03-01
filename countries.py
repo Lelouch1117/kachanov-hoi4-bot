@@ -64,7 +64,6 @@ def assign_country(tag, user_id):
     conn = get_connection()
     cur = conn.cursor()
 
-    # Проверяем занята ли
     cur.execute("SELECT user_id FROM countries WHERE tag = %s", (tag,))
     row = cur.fetchone()
 
@@ -73,7 +72,7 @@ def assign_country(tag, user_id):
         conn.close()
         return "not_found"
 
-    if row[0] and row["user_id"] != user_id:
+    if row["user_id"] and row["user_id"] != user_id:
         cur.close()
         conn.close()
         return "taken"
@@ -90,7 +89,11 @@ def assign_country(tag, user_id):
 
     return "ok"
 
+async def callback(self, interaction: discord.Interaction):
 
+    await interaction.response.defer()   # <-- ДОБАВЬ ЭТУ СТРОКУ
+
+    result = assign_country(self.tag, interaction.user.id)
 # ----------------- UI -----------------
 
 class CountryView(discord.ui.View):
@@ -126,6 +129,7 @@ class CountryButton(discord.ui.Button):
             pass
 
         await interaction.message.edit(view=CountryView())
+
 
 
 
