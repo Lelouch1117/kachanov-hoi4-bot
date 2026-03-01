@@ -104,31 +104,32 @@ class CountryView(discord.ui.View):
             self.add_item(CountryButton(tag))
 
 
-class CountryButton(discord.ui.Button):
-    def __init__(self, tag):
-        super().__init__(label=tag, style=discord.ButtonStyle.primary)
-        self.tag = tag
+async def callback(self, interaction: discord.Interaction):
 
-    async def callback(self, interaction: discord.Interaction):
+    await interaction.response.defer()
 
-        result = assign_country(self.tag, interaction.user.id)
+    result = assign_country(self.tag, interaction.user.id)
 
-        if result == "taken":
-            await interaction.response.send_message("Эта страна занята.", ephemeral=True)
-            return
+    if result == "taken":
+        await interaction.followup.send("Эта страна занята.", ephemeral=True)
+        return
 
-        if result == "not_found":
-            await interaction.response.send_message("Страна не найдена.", ephemeral=True)
-            return
+    if result == "not_found":
+        await interaction.followup.send("Страна не найдена.", ephemeral=True)
+        return
 
-        await interaction.response.send_message(f"Вы заняли {self.tag}")
+    # Публичное сообщение
+    await interaction.followup.send(
+        f"{interaction.user.display_name} занял {self.tag}"
+    )
 
-        try:
-            await interaction.user.send(f"Вы успешно заняли {self.tag}")
-        except:
-            pass
+    # Личное сообщение
+    try:
+        await interaction.user.send(f"Вы успешно заняли {self.tag}")
+    except:
+        pass
 
-        await interaction.message.edit(view=CountryView())
+    await interaction.message.edit(view=CountryView())
 
 
 
