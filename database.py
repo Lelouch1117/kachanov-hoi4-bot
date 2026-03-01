@@ -142,7 +142,7 @@ def add_game_db(description):
         (description,)
     )
 
-    game_id = cur.fetchone()[0]
+    game_id = cur.fetchone()["id"]
 
     conn.commit()
     cur.close()
