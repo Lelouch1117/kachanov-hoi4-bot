@@ -108,3 +108,25 @@ def clear_countries():
     conn.commit()
     cur.close()
     conn.close()
+def register_country(tag, user_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "INSERT INTO countries (tag, user_id) VALUES (%s, %s) ON CONFLICT (tag) DO UPDATE SET user_id = EXCLUDED.user_id",
+        (tag, user_id)
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def get_taken_countries():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM countries")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return rows
