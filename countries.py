@@ -1,4 +1,5 @@
 import discord
+from database import assign_country, get_available_countries
 from database import get_connection
 
 
@@ -108,9 +109,40 @@ class CountryView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-        for tag in get_available_countries():
-            self.add_item(CountryButton(tag))
+        available = get_available_countries()
 
+        for tag in available:
+            self.add_item(CountryButton(tag))
+            
+class CountryButton(discord.ui.Button):
+    def __init__(self, tag):
+        super().__init__(label=tag, style=discord.ButtonStyle.primary)
+        self.tag = tag
+
+    async def callback(self, interaction: discord.Interaction):
+
+        await interaction.response.defer()
+
+        result = assign_country(self.tag, interaction.user.id)
+
+        if result == "taken":
+            await interaction.followup.send("Эта страна занята.", ephemeral=True)
+            return
+
+        if result == "not_found":
+            await interaction.followup.send("Страна не найдена.", ephemeral=True)
+            return
+
+        await interaction.followup.send(
+            f"{interaction.user.display_name} занял {self.tag}"
+        )
+
+        try:
+            await interaction.user.send(f"Вы успешно заняли {self.tag}")
+        except:
+            pass
+
+        await interaction.message.edit(view=CountryView())
 
 async def callback(self, interaction: discord.Interaction):
 
@@ -138,6 +170,7 @@ async def callback(self, interaction: discord.Interaction):
         pass
 
     await interaction.message.edit(view=CountryView())
+
 
 
 
