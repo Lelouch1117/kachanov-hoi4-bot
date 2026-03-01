@@ -35,10 +35,18 @@ def clear_all():
 def get_available_countries():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT tag FROM countries WHERE user_id IS NULL")
+
+    cur.execute("""
+        SELECT tag FROM countries
+        WHERE user_id IS NULL
+        ORDER BY tag
+    """)
+
     rows = cur.fetchall()
+
     cur.close()
     conn.close()
+
     return [row["tag"] for row in rows]
 
 
@@ -130,6 +138,7 @@ async def callback(self, interaction: discord.Interaction):
         pass
 
     await interaction.message.edit(view=CountryView())
+
 
 
 
