@@ -64,7 +64,7 @@ async def list_games(interaction: discord.Interaction):
 
     text = ""
     for game in db_games:
-        text += f"ID {game[0]}: {game[1]}\n\n"
+        text += f"ID {game['id']}: {game['description']}\n\n"
 
     await interaction.response.send_message(text)
 
@@ -173,4 +173,5 @@ async def admin_panel(interaction: discord.Interaction):
 # ================= RUN =================
 
 bot.run(TOKEN)
+
 
