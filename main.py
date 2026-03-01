@@ -1,11 +1,13 @@
+import os
 import discord
 from discord.ext import commands
 from discord import app_commands
-
 import countries
 import games
-import os
+
 TOKEN = os.getenv("TOKEN")
+if TOKEN is None:
+    raise ValueError("TOKEN не найден в переменных окружения")
 GUILD_ID = 1352318286788038746
 
 intents = discord.Intents.default()
@@ -142,6 +144,7 @@ async def admin_panel(interaction: discord.Interaction):
 
     view = AdminPanel()
     await interaction.response.send_message("Админ-панель:", view=view, ephemeral=True)
+
 
 
 bot.run(TOKEN)
