@@ -170,3 +170,36 @@ def remove_game_db(game_id):
     cur.close()
     conn.close()
     return deleted > 0
+def assign_country(tag, user_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Проверяем существует ли страна
+    cur.execute("SELECT user_id FROM countries WHERE tag = %s", (tag,))
+    row = cur.fetchone()
+
+    if not row:
+        cur.close()
+        conn.close()
+        return "not_found"
+
+    # Если уже занята другим
+    if row["user_id"] and row["user_id"] != user_id:
+        cur.close()
+        conn.close()
+        return "taken"
+
+    # Убираем старую страну у пользователя
+    cur.execute("UPDATE countries SET user_id = NULL WHERE user_id = %s", (user_id,))
+
+    # Назначаем новую
+    cur.execute(
+        "UPDATE countries SET user_id = %s WHERE tag = %s",
+        (user_id, tag)
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "ok"
