@@ -39,7 +39,7 @@ def get_available_countries():
     rows = cur.fetchall()
     cur.close()
     conn.close()
-    return [row[0] for row in rows]
+    return [row["tag"] for row in rows]
 
 
 def get_taken_country_by_user(user_id):
@@ -126,5 +126,6 @@ class CountryButton(discord.ui.Button):
             pass
 
         await interaction.message.edit(view=CountryView())
+
 
 
