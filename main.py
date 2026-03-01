@@ -1,5 +1,5 @@
 import os
-print("DATABASE_URL =", os.getenv("DATABASE_URL"))
+print("DEBUG DATABASE_URL =", os.getenv("DATABASE_URL"))
 from database import init_db
 init_db()
 import os
@@ -168,6 +168,7 @@ async def admin_panel(interaction: discord.Interaction):
 
 
 bot.run(TOKEN)
+
 
 
 
