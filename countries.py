@@ -1,28 +1,95 @@
 import discord
+from database import get_connection
 
-available_countries = []
-taken_countries = {}   # tag -> user_id
-user_country = {}      # user_id -> tag
 
+# ----------------- DB FUNCTIONS -----------------
 
 def set_countries(countries_string):
-    global available_countries, taken_countries, user_country
-    available_countries = [c.strip().upper() for c in countries_string.split(",")]
-    taken_countries.clear()
-    user_country.clear()
+    tags = [c.strip().upper() for c in countries_string.split(",")]
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM countries")
+
+    for tag in tags:
+        cur.execute(
+            "INSERT INTO countries (tag, user_id) VALUES (%s, NULL)",
+            (tag,)
+        )
+
+    conn.commit()
+    cur.close()
+    conn.close()
 
 
 def clear_all():
-    available_countries.clear()
-    taken_countries.clear()
-    user_country.clear()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM countries")
+    conn.commit()
+    cur.close()
+    conn.close()
 
+
+def get_available_countries():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT tag FROM countries WHERE user_id IS NULL")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [row["tag"] for row in rows]
+
+
+def get_taken_country_by_user(user_id):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT tag FROM countries WHERE user_id = %s", (user_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    return row["tag"] if row else None
+
+
+def assign_country(tag, user_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Проверяем занята ли
+    cur.execute("SELECT user_id FROM countries WHERE tag = %s", (tag,))
+    row = cur.fetchone()
+
+    if not row:
+        cur.close()
+        conn.close()
+        return "not_found"
+
+    if row["user_id"] and row["user_id"] != user_id:
+        cur.close()
+        conn.close()
+        return "taken"
+
+    # Освобождаем старую страну пользователя
+    cur.execute("UPDATE countries SET user_id = NULL WHERE user_id = %s", (user_id,))
+
+    # Назначаем новую
+    cur.execute("UPDATE countries SET user_id = %s WHERE tag = %s", (user_id, tag))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "ok"
+
+
+# ----------------- UI -----------------
 
 class CountryView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-        for tag in available_countries:
+        for tag in get_available_countries():
             self.add_item(CountryButton(tag))
 
 
@@ -33,34 +100,21 @@ class CountryButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
 
-        tag = self.tag
-        user_id = interaction.user.id
+        result = assign_country(self.tag, interaction.user.id)
 
-        # Если страна занята другим
-        if tag in taken_countries and taken_countries[tag] != user_id:
+        if result == "taken":
             await interaction.response.send_message("Эта страна занята.", ephemeral=True)
             return
 
-        # Если пользователь уже выбрал страну
-        if user_id in user_country:
-            old_tag = user_country[user_id]
-            if old_tag != tag:
-                available_countries.append(old_tag)
-                del taken_countries[old_tag]
+        if result == "not_found":
+            await interaction.response.send_message("Страна не найдена.", ephemeral=True)
+            return
 
-        # Назначаем новую
-        taken_countries[tag] = user_id
-        user_country[user_id] = tag
-
-        if tag in available_countries:
-            available_countries.remove(tag)
-
-        await interaction.response.send_message(f"Вы заняли {tag}")
+        await interaction.response.send_message(f"Вы заняли {self.tag}")
 
         try:
-            await interaction.user.send(f"Вы успешно заняли {tag}")
+            await interaction.user.send(f"Вы успешно заняли {self.tag}")
         except:
             pass
 
-        # Обновляем панель
         await interaction.message.edit(view=CountryView())
