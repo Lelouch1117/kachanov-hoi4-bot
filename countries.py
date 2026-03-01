@@ -1,5 +1,5 @@
 import discord
-from database import get_available_countries
+from database import assign_country, get_available_countries
 from database import get_connection
 
 
