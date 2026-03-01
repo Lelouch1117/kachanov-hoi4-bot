@@ -1,3 +1,5 @@
+from database import init_db
+init_db()
 import os
 import discord
 from discord.ext import commands
@@ -148,3 +150,4 @@ async def admin_panel(interaction: discord.Interaction):
 
 
 bot.run(TOKEN)
+
