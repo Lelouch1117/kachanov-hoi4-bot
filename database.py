@@ -73,11 +73,19 @@ def set_countries(tags):
 def get_available_countries():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT tag FROM countries WHERE user_id IS NULL;")
-    countries = [row["tag"] for row in cur.fetchall()]
+
+    cur.execute("""
+        SELECT tag FROM countries
+        WHERE user_id IS NULL
+        ORDER BY tag
+    """)
+
+    rows = cur.fetchall()
+
     cur.close()
     conn.close()
-    return countries
+
+    return [row["tag"] for row in rows]
 
 
 def register_country(tag, user_id):
