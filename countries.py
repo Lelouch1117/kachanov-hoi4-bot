@@ -146,30 +146,44 @@ class CountryButton(discord.ui.Button):
 
 async def callback(self, interaction: discord.Interaction):
 
-    await interaction.response.defer()
-
-    result = assign_country(self.tag, interaction.user.id)
-
-    if result == "taken":
-        await interaction.followup.send("Эта страна занята.", ephemeral=True)
-        return
-
-    if result == "not_found":
-        await interaction.followup.send("Страна не найдена.", ephemeral=True)
-        return
-
-    # Публичное сообщение
-    await interaction.followup.send(
-        f"{interaction.user.display_name} занял {self.tag}"
-    )
-
-    # Личное сообщение
     try:
-        await interaction.user.send(f"Вы успешно заняли {self.tag}")
-    except:
-        pass
+        result = assign_country(self.tag, interaction.user.id)
 
-    await interaction.message.edit(view=CountryView())
+        if result == "taken":
+            await interaction.response.send_message(
+                "Эта страна занята.",
+                ephemeral=True
+            )
+            return
+
+        if result == "not_found":
+            await interaction.response.send_message(
+                "Страна не найдена.",
+                ephemeral=True
+            )
+            return
+
+        # Публичное сообщение
+        await interaction.response.send_message(
+            f"{interaction.user.display_name} занял {self.tag}"
+        )
+
+        # ЛС игроку
+        try:
+            await interaction.user.send(f"Вы успешно заняли {self.tag}")
+        except:
+            pass
+
+        # Обновляем кнопки
+        await interaction.message.edit(view=CountryView())
+
+    except Exception as e:
+        print("BUTTON ERROR:", e)
+        await interaction.response.send_message(
+            "Произошла ошибка.",
+            ephemeral=True
+        )
+
 
 
 
