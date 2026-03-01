@@ -3,12 +3,16 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-from database import init_db, get_games
+from database import (
+    init_db,
+    add_game_db,
+    get_games,
+    remove_game_db
+)
 import countries
-import games
 
 
-# ----------------- ENV -----------------
+# ================= INIT =================
 
 print("DEBUG DATABASE_URL =", os.getenv("DATABASE_URL"))
 
@@ -19,9 +23,6 @@ if TOKEN is None:
     raise ValueError("TOKEN не найден в переменных окружения")
 
 GUILD_ID = 1352318286788038746
-
-
-# ----------------- BOT INIT -----------------
 
 intents = discord.Intents.default()
 intents.members = True
@@ -36,9 +37,55 @@ async def on_ready():
     print(f"Бот запущен как {bot.user}")
 
 
-# =========================================================
-# ======================= COUNTRIES =======================
-# =========================================================
+# =====================================================
+# ======================= GAMES ========================
+# =====================================================
+
+@bot.tree.command(name="add_game", guild=discord.Object(id=GUILD_ID))
+@app_commands.describe(description="Описание игры")
+async def add_game(interaction: discord.Interaction, description: str):
+
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("Нет прав.", ephemeral=True)
+        return
+
+    game_id = add_game_db(description)
+    await interaction.response.send_message(f"Игра добавлена с ID {game_id}")
+
+
+@bot.tree.command(name="list_games", guild=discord.Object(id=GUILD_ID))
+async def list_games(interaction: discord.Interaction):
+
+    db_games = get_games()
+
+    if not db_games:
+        await interaction.response.send_message("Активных игр нет.")
+        return
+
+    text = ""
+    for game in db_games:
+        text += f"ID {game[0]}: {game[1]}\n\n"
+
+    await interaction.response.send_message(text)
+
+
+@bot.tree.command(name="clear_game", guild=discord.Object(id=GUILD_ID))
+@app_commands.describe(game_id="ID игры")
+async def clear_game(interaction: discord.Interaction, game_id: int):
+
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("Нет прав.", ephemeral=True)
+        return
+
+    if remove_game_db(game_id):
+        await interaction.response.send_message("Игра удалена.")
+    else:
+        await interaction.response.send_message("Игра не найдена.", ephemeral=True)
+
+
+# =====================================================
+# ===================== COUNTRIES ======================
+# =====================================================
 
 @bot.tree.command(name="enter_countries", guild=discord.Object(id=GUILD_ID))
 @app_commands.describe(countries_list="Введите через запятую: SOV,GER,USA")
@@ -55,15 +102,10 @@ async def enter_countries(interaction: discord.Interaction, countries_list: str)
 @bot.tree.command(name="list_countries", guild=discord.Object(id=GUILD_ID))
 async def list_countries(interaction: discord.Interaction):
 
-    if not countries.available_countries:
-        await interaction.response.send_message("Свободных стран нет.")
-        return
+    available = countries.get_available_countries()
 
-    if len(countries.available_countries) > 25:
-        text = ", ".join(countries.available_countries)
-        await interaction.response.send_message(
-            f"Свободные страны:\n{text}"
-        )
+    if not available:
+        await interaction.response.send_message("Свободных стран нет.")
         return
 
     view = countries.CountryView()
@@ -81,55 +123,9 @@ async def clear_countries(interaction: discord.Interaction):
     await interaction.response.send_message("Список стран очищен.")
 
 
-# =========================================================
-# ========================= GAMES =========================
-# =========================================================
-
-@bot.tree.command(name="add_game", guild=discord.Object(id=GUILD_ID))
-@app_commands.describe(description="Описание игры")
-async def add_game(interaction: discord.Interaction, description: str):
-
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("Нет прав.", ephemeral=True)
-        return
-
-    game_id = games.add_game(description)
-    await interaction.response.send_message(f"Игра добавлена с ID {game_id}")
-
-
-@bot.tree.command(name="list_games", guild=discord.Object(id=GUILD_ID))
-async def list_games(interaction: discord.Interaction):
-
-    db_games = get_games()
-
-    if not db_games:
-        await interaction.response.send_message("Активных игр нет.")
-        return
-
-    text = ""
-    for game in db_games:
-        text += f"ID {game['id']}: {game['description']}\n\n"
-
-    await interaction.response.send_message(text)
-
-
-@bot.tree.command(name="clear_game", guild=discord.Object(id=GUILD_ID))
-@app_commands.describe(game_id="ID игры")
-async def clear_game(interaction: discord.Interaction, game_id: int):
-
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("Нет прав.", ephemeral=True)
-        return
-
-    if games.remove_game(game_id):
-        await interaction.response.send_message("Игра удалена.")
-    else:
-        await interaction.response.send_message("Игра не найдена.", ephemeral=True)
-
-
-# =========================================================
-# ====================== ADMIN PANEL ======================
-# =========================================================
+# =====================================================
+# ===================== ADMIN PANEL ====================
+# =====================================================
 
 class AdminPanel(discord.ui.View):
     def __init__(self):
@@ -142,14 +138,18 @@ class AdminPanel(discord.ui.View):
             await interaction.response.send_message("Нет прав.", ephemeral=True)
             return
 
-        if not countries.taken_countries:
+        taken = countries.get_taken_countries()
+
+        if not taken:
             await interaction.response.send_message("Никто не зарегистрирован.", ephemeral=True)
             return
 
         text = ""
-        for tag, user_id in countries.taken_countries.items():
-            user = await interaction.guild.fetch_member(user_id)
-            text += f"{tag} — {user.display_name}\n"
+        for row in taken:
+            tag = row[0]
+            user_id = row[1]
+            member = await interaction.guild.fetch_member(user_id)
+            text += f"{tag} — {member.display_name}\n"
 
         await interaction.response.send_message(text, ephemeral=True)
 
@@ -165,6 +165,6 @@ async def admin_panel(interaction: discord.Interaction):
     await interaction.response.send_message("Админ-панель:", view=view, ephemeral=True)
 
 
-# ----------------- RUN -----------------
+# ================= RUN =================
 
 bot.run(TOKEN)
