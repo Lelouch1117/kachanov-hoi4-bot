@@ -247,17 +247,18 @@ async def update_registration_panel(interaction):
         )
 
     if taken:
-        text = ""
-        for row in taken:
-            tag = row["tag"]
-            user_id = row["user_id"]
-            text += f"{tag} — <@{user_id}>\n"
+    text = ""
 
-        embed.add_field(
-            name="🔴 Занятые страны",
-            value=text,
-            inline=False
-        )
+    for row in taken:
+        tag = row["tag"]
+        user_id = row["user_id"]
+        text += f"{tag} — <@{user_id}>\n"
+
+    embed.add_field(
+        name="🔴 Занятые страны",
+        value=text,
+        inline=False
+    )
     else:
         embed.add_field(
             name="🔴 Занятые страны",
@@ -334,6 +335,7 @@ async def admin_panel(interaction: discord.Interaction):
 # ================= RUN =================
 
 bot.run(TOKEN)
+
 
 
 
