@@ -159,6 +159,100 @@ async def register(interaction: discord.Interaction, tag: str):
         await interaction.user.send(f"Вы успешно заняли {tag}")
     except:
         pass
+
+@bot.tree.command(name="open_registration", guild=discord.Object(id=GUILD_ID))
+class RegistrationView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+        available = countries.get_available_countries()
+
+        # Кнопки только если <=25
+        if len(available) <= 25:
+            for tag in available:
+                self.add_item(RegisterButton(tag))
+
+
+class RegisterButton(discord.ui.Button):
+    def __init__(self, tag):
+        super().__init__(label=tag, style=discord.ButtonStyle.primary)
+        self.tag = tag
+
+    async def callback(self, interaction: discord.Interaction):
+
+        result = countries.assign_country(self.tag, interaction.user.id)
+
+        if result == "taken":
+            await interaction.response.send_message("Страна занята.", ephemeral=True)
+            return
+
+        if result == "not_found":
+            await interaction.response.send_message("Страна не найдена.", ephemeral=True)
+            return
+
+        await interaction.response.defer()
+
+        # Обновляем панель
+        await update_registration_panel(interaction)
+
+async def update_registration_panel(interaction):
+
+    available = countries.get_available_countries()
+    taken = countries.get_taken_countries()
+
+    embed = discord.Embed(
+        title="🎮 Регистрация на игру",
+        color=discord.Color.blue()
+    )
+
+    if available:
+        embed.add_field(
+            name="🟢 Свободные страны",
+            value="\n".join(available),
+            inline=False
+        )
+    else:
+        embed.add_field(
+            name="🟢 Свободные страны",
+            value="Нет",
+            inline=False
+        )
+
+    if taken:
+        text = ""
+        for row in taken:
+            tag = row["tag"]
+            user_id = row["user_id"]
+            text += f"{tag} — <@{user_id}>\n"
+
+        embed.add_field(
+            name="🔴 Занятые страны",
+            value=text,
+            inline=False
+        )
+    else:
+        embed.add_field(
+            name="🔴 Занятые страны",
+            value="Нет",
+            inline=False
+        )
+
+    view = RegistrationView()
+
+    await interaction.message.edit(embed=embed, view=view)
+
+@bot.tree.command(name="open_registration", guild=discord.Object(id=GUILD_ID))
+async def open_registration(interaction: discord.Interaction):
+
+    embed = discord.Embed(
+        title="🎮 Регистрация на игру",
+        description="Выберите страну кнопкой или используйте /register TAG",
+        color=discord.Color.green()
+    )
+
+    view = RegistrationView()
+
+    await interaction.response.send_message(embed=embed, view=view)
 # =====================================================
 # ===================== ADMIN PANEL ====================
 # =====================================================
@@ -182,8 +276,9 @@ class AdminPanel(discord.ui.View):
 
         text = ""
         for row in taken:
-            tag = row["tag"]
-            user_id = row["user_id"]
+    tag = row["tag"]
+    user_id = row["user_id"]
+    text += f"{tag} — <@{user_id}>\n"
 
             try:
                 member = await interaction.guild.fetch_member(user_id)
@@ -209,6 +304,7 @@ async def admin_panel(interaction: discord.Interaction):
 # ================= RUN =================
 
 bot.run(TOKEN)
+
 
 
 
