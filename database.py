@@ -211,3 +211,16 @@ def assign_country(tag, user_id):
     conn.close()
 
     return "ok"
+
+def remove_user_from_country(user_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "UPDATE countries SET user_id = NULL WHERE user_id = %s",
+        (user_id,)
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
