@@ -132,7 +132,7 @@ async def enter_countries(interaction: discord.Interaction, countries_list: str)
         await interaction.response.send_message("Нет прав.", ephemeral=True)
         return
 
-    countries.set_countries(countries_list)
+    set_countries(countries_list)
     await interaction.response.send_message("Список стран обновлён.")
 
 
@@ -295,4 +295,5 @@ async def admin_panel(interaction: discord.Interaction):
 # ================= RUN =================
 
 bot.run(TOKEN)
+
 
