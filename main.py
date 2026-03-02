@@ -2,6 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from discord import app_commands
+from database import remove_user_from_country
 
 from database import (
     init_db,
@@ -262,8 +263,12 @@ class AdminPanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Список занятых стран", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="📋 Список занятых стран", style=discord.ButtonStyle.secondary)
     async def show_taken(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        if not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("Нет прав.", ephemeral=True)
+            return
 
         taken = countries.get_taken_countries()
 
@@ -271,12 +276,74 @@ class AdminPanel(discord.ui.View):
             await interaction.response.send_message("Никто не зарегистрирован.", ephemeral=True)
             return
 
+        embed = discord.Embed(
+            title="🔴 Занятые страны",
+            color=discord.Color.red()
+        )
+
         text = ""
         for row in taken:
             text += f"{row['tag']} — <@{row['user_id']}>\n"
 
-        await interaction.response.send_message(text, ephemeral=True)
+        embed.description = text
 
+        await interaction.response.send_message(embed=embed, view=KickView(), ephemeral=True)
+        
+class KickView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=120)
+
+        taken = countries.get_taken_countries()
+
+        for row in taken:
+            tag = row["tag"]
+            user_id = row["user_id"]
+            self.add_item(KickButton(tag, user_id))
+
+
+class KickButton(discord.ui.Button):
+    def __init__(self, tag, user_id):
+        super().__init__(
+            label=f"❌ Убрать {tag}",
+            style=discord.ButtonStyle.danger
+        )
+        self.user_id = user_id
+        self.tag = tag
+
+    async def callback(self, interaction: discord.Interaction):
+
+        if not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("Нет прав.", ephemeral=True)
+            return
+
+        remove_user_from_country(self.user_id)
+
+        # Получаем обновлённый список
+        taken = countries.get_taken_countries()
+
+        if not taken:
+            await interaction.response.edit_message(
+                content="Все игроки удалены.",
+                embed=None,
+                view=None
+            )
+            return
+
+        embed = discord.Embed(
+            title="🔴 Занятые страны",
+            color=discord.Color.red()
+        )
+
+        text = ""
+        for row in taken:
+            text += f"{row['tag']} — <@{row['user_id']}>\n"
+
+        embed.description = text
+
+        await interaction.response.edit_message(
+            embed=embed,
+            view=KickView()
+        )
 
 @bot.tree.command(name="admin_panel", guild=discord.Object(id=GUILD_ID))
 async def admin_panel(interaction: discord.Interaction):
@@ -295,5 +362,6 @@ async def admin_panel(interaction: discord.Interaction):
 # ================= RUN =================
 
 bot.run(TOKEN)
+
 
 
