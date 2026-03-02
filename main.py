@@ -11,7 +11,35 @@ from database import (
 )
 import countries
 
+@bot.tree.command(name="help", guild=discord.Object(id=GUILD_ID))
+async def help_command(interaction: discord.Interaction):
 
+    embed = discord.Embed(
+        title="📘 Помощь по боту",
+        color=discord.Color.purple()
+    )
+
+    embed.add_field(
+        name="🎮 Игрокам",
+        value="""
+/list_countries — список стран  
+/register TAG — занять страну  
+""",
+        inline=False
+    )
+
+    embed.add_field(
+        name="🛠 Администраторам",
+        value="""
+/enter_countries — добавить страны  
+/clear_countries — очистить  
+/admin_panel — панель управления  
+/open_registration — открыть панель регистрации  
+""",
+        inline=False
+    )
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 # ================= INIT =================
 
 print("DEBUG DATABASE_URL =", os.getenv("DATABASE_URL"))
@@ -306,6 +334,7 @@ async def admin_panel(interaction: discord.Interaction):
 # ================= RUN =================
 
 bot.run(TOKEN)
+
 
 
 
