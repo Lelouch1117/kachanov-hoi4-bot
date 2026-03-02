@@ -211,3 +211,20 @@ def remove_user_from_country(user_id):
     conn.commit()
     cur.close()
     conn.close()
+def set_countries(countries_string):
+    tags = [tag.strip().upper() for tag in countries_string.split(",")]
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM countries")
+
+    for tag in tags:
+        cur.execute(
+            "INSERT INTO countries (tag, user_id) VALUES (%s, NULL)",
+            (tag,)
+        )
+
+    conn.commit()
+    cur.close()
+    conn.close()
