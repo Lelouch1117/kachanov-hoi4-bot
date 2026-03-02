@@ -260,11 +260,11 @@ async def update_registration_panel(interaction):
         inline=False
     )
     else:
-        embed.add_field(
-            name="🔴 Занятые страны",
-            value="Нет",
-            inline=False
-        )
+    embed.add_field(
+        name="🔴 Занятые страны",
+        value="Нет",
+        inline=False
+    )
 
     view = RegistrationView()
 
@@ -335,6 +335,7 @@ async def admin_panel(interaction: discord.Interaction):
 # ================= RUN =================
 
 bot.run(TOKEN)
+
 
 
 
