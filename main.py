@@ -7,9 +7,9 @@ from database import (
     init_db,
     add_game_db,
     get_games,
-    remove_game_db
+    remove_game_db,
+    set_countries  
 )
-
 import countries
 
 # ================= INIT =================
@@ -295,3 +295,4 @@ async def admin_panel(interaction: discord.Interaction):
 # ================= RUN =================
 
 bot.run(TOKEN)
+
