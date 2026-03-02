@@ -301,9 +301,12 @@ async def admin_panel(interaction: discord.Interaction):
     view = AdminPanel()
     await interaction.response.send_message("Админ-панель:", view=view, ephemeral=True)
 
+@discord.ui.button(label="❌ Убрать игрока", style=discord.ButtonStyle.danger)
+
 # ================= RUN =================
 
 bot.run(TOKEN)
+
 
 
 
